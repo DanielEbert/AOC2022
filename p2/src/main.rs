@@ -7,6 +7,13 @@ enum Decision {
     Scissors,
 }
 
+#[derive(Copy, Clone)]
+enum Outcome {
+    Win,
+    Lose,
+    Draw,
+}
+
 const rock_score: u32 = 1;
 const paper_score: u32 = 2;
 const scissors_score: u32 = 3;
@@ -17,42 +24,47 @@ const win_score: u32 = 6;
 
 #[derive(Copy, Clone)]
 struct Game {
-    player_decision: Decision,
     enemy_decision: Decision,
+    required_outcome: Outcome,
 }
 
 impl Game {
     fn score(self) -> u32 {
-        match self.player_decision {
-            Decision::Rock => match self.enemy_decision {
-                Decision::Rock => rock_score + draw_score,
-                Decision::Paper => rock_score + lose_score,
-                Decision::Scissors => rock_score + win_score,
+        match self.enemy_decision {
+            Decision::Rock => match self.required_outcome {
+                Outcome::Draw => rock_score + draw_score,
+                Outcome::Lose => scissors_score + lose_score,
+                Outcome::Win => paper_score + win_score,
             },
-            Decision::Paper => match self.enemy_decision {
-                Decision::Rock => paper_score + win_score,
-                Decision::Paper => paper_score + draw_score,
-                Decision::Scissors => paper_score + lose_score,
+            Decision::Paper => match self.required_outcome {
+                Outcome::Win => scissors_score + win_score,
+                Outcome::Draw => paper_score + draw_score,
+                Outcome::Lose => rock_score + lose_score,
             },
-            Decision::Scissors => match self.enemy_decision {
-                Decision::Rock => scissors_score + lose_score,
-                Decision::Paper => scissors_score + win_score,
-                Decision::Scissors => scissors_score + draw_score,
+            Decision::Scissors => match self.required_outcome {
+                Outcome::Lose => paper_score + lose_score,
+                Outcome::Win => rock_score + win_score,
+                Outcome::Draw => scissors_score + draw_score,
             },
         }
     }
 }
-
-/// TODO: first column is enemy play, second column is my recommended play
 
 fn str_to_decision(decision_str: &str) -> Decision {
     match decision_str {
         "A" => Decision::Rock,
         "B" => Decision::Paper,
         "C" => Decision::Scissors,
-        "X" => Decision::Rock,
-        "Y" => Decision::Paper,
-        "Z" => Decision::Scissors,
+
+        _ => unreachable!("No such decision"),
+    }
+}
+
+fn str_to_outcome(outcome_str: &str) -> Outcome {
+    match outcome_str {
+        "X" => Outcome::Lose,
+        "Y" => Outcome::Draw,
+        "Z" => Outcome::Win,
         _ => unreachable!("No such decision"),
     }
 }
@@ -63,7 +75,7 @@ fn parse_file(filename: &str) -> Vec<Game> {
     input
         .lines()
         .map(|line| Game {
-            player_decision: str_to_decision(&line[2..3]),
+            required_outcome: str_to_outcome(&line[2..3]),
             enemy_decision: str_to_decision(&line[0..1]),
         })
         .collect::<Vec<Game>>()
